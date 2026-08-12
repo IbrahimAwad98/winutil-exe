@@ -14,7 +14,9 @@ inte originalprojektet.
   MessageBox-popups och winutil skriver massor av status under körning.
 - Inga hemligheter eller tokens i repot; workflowet använder `GITHUB_TOKEN`.
 - Ikonen ligger i `assets/winutil.ico` och byts genom att ersätta filen —
-  inte genom att ändra workflowet.
+  inte genom att ändra workflowet. Motivet är winutils officiella logotyp,
+  renderad från vektorpaths i winutil.ps1 (MIT, CT Tech Group LLC) — inte
+  en egen bild.
 
 ## Arkitektur
 
