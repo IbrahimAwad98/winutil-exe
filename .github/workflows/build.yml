@@ -1,0 +1,82 @@
+name: Build winutil.exe
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Build even if our latest release already matches upstream
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.cmp.outputs.should_build }}
+      tag: ${{ steps.cmp.outputs.tag }}
+    steps:
+      - name: Compare upstream tag with our latest release
+        id: cmp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          upstream=$(gh api repos/ChrisTitusTech/winutil/releases/latest --jq .tag_name)
+          ours=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name 2>/dev/null || echo "")
+          if [ "${{ inputs.force }}" = "true" ] || [ "$upstream" != "$ours" ]; then
+            should_build=true
+          else
+            should_build=false
+          fi
+          echo "upstream=$upstream ours=$ours should_build=$should_build"
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+          echo "tag=$upstream" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
+    runs-on: windows-latest
+    env:
+      TAG: ${{ needs.check.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Exclude workspace from Defender
+        shell: powershell
+        run: Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE"
+
+      - name: Download winutil.ps1 from upstream release
+        shell: powershell
+        run: |
+          # Asset name verified against the API: releases contain exactly "winutil.ps1"
+          gh release download $env:TAG --repo ChrisTitusTech/winutil --pattern winutil.ps1
+          if (-not (Test-Path .\winutil.ps1)) { throw "winutil.ps1 not found after download" }
+
+      - name: Install ps2exe
+        shell: powershell
+        run: Install-Module ps2exe -Force -Scope CurrentUser
+
+      - name: Build exe
+        shell: powershell
+        # -noConsole is deliberately NOT used: it turns every Write-Host into a
+        # MessageBox popup, and winutil writes status output constantly during a
+        # run. Do not add it. See CLAUDE.md.
+        run: Invoke-PS2EXE .\winutil.ps1 .\winutil.exe -requireAdmin -title "WinUtil"
+
+      - name: Verify output
+        shell: powershell
+        run: |
+          $exe = Get-Item .\winutil.exe -ErrorAction Stop
+          if ($exe.Length -lt 100KB) { throw "winutil.exe is only $($exe.Length) bytes; build likely failed" }
+          Write-Host "winutil.exe OK: $($exe.Length) bytes"
+
+      - name: Create release
+        shell: powershell
+        run: |
+          gh release create $env:TAG winutil.exe `
+            --repo $env:GITHUB_REPOSITORY `
+            --title "winutil.exe $env:TAG" `
+            --notes "ps2exe repackaging of https://github.com/ChrisTitusTech/winutil/releases/tag/$env:TAG - see NOTICE. Not affiliated with CT Tech Group LLC."

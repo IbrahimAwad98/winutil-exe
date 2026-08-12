@@ -1,0 +1,19 @@
+NOTICE
+
+This repository is NOT the original winutil project and is NOT affiliated
+with, endorsed by, or maintained by CT Tech Group LLC or Chris Titus Tech.
+
+It is an automated repackaging, for personal use, of the winutil.ps1 script
+published at:
+
+    https://github.com/ChrisTitusTech/winutil
+
+Each release here downloads the unmodified winutil.ps1 from the corresponding
+upstream release and wraps it into a Windows executable using ps2exe. No
+changes are made to the script itself.
+
+winutil is licensed under the MIT License, Copyright (c) 2022 CT Tech Group
+LLC. See the LICENSE file in this repository for the full license text.
+
+For the original project, issues, and support, use the upstream repository
+linked above.
