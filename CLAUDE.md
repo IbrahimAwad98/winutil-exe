@@ -13,6 +13,8 @@ inte originalprojektet.
   först läsa kommentaren där om varför: -noConsole gör om Write-Host till
   MessageBox-popups och winutil skriver massor av status under körning.
 - Inga hemligheter eller tokens i repot; workflowet använder `GITHUB_TOKEN`.
+- Ikonen ligger i `assets/winutil.ico` och byts genom att ersätta filen —
+  inte genom att ändra workflowet.
 
 ## Arkitektur
 

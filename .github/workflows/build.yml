@@ -48,6 +48,10 @@ jobs:
         shell: powershell
         run: Add-MpPreference -ExclusionPath "$env:GITHUB_WORKSPACE"
 
+      # Needed for assets/winutil.ico — the build otherwise only uses downloaded files
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download winutil.ps1 from upstream release
         shell: powershell
         run: |
@@ -64,7 +68,11 @@ jobs:
         # -noConsole is deliberately NOT used: it turns every Write-Host into a
         # MessageBox popup, and winutil writes status output constantly during a
         # run. Do not add it. See CLAUDE.md.
-        run: Invoke-PS2EXE .\winutil.ps1 .\winutil.exe -requireAdmin -title "WinUtil"
+        run: |
+          Invoke-PS2EXE .\winutil.ps1 .\winutil.exe `
+            -requireAdmin `
+            -title "WinUtil" `
+            -iconFile "${{ github.workspace }}\assets\winutil.ico"
 
       - name: Verify output
         shell: powershell
