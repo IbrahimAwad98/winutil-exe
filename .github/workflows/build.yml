@@ -88,3 +88,8 @@ jobs:
             --repo $env:GITHUB_REPOSITORY `
             --title "winutil.exe $env:TAG" `
             --notes "ps2exe repackaging of https://github.com/ChrisTitusTech/winutil/releases/tag/$env:TAG - see NOTICE. Not affiliated with CT Tech Group LLC."
+          if ($LASTEXITCODE -ne 0) {
+            # Tag already has a release (force rebuild) - replace the asset instead
+            gh release upload $env:TAG winutil.exe --repo $env:GITHUB_REPOSITORY --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Both release create and upload failed for tag $env:TAG" }
+          }
